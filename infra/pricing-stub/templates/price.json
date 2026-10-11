@@ -1,0 +1,24 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/api/v1/prices/[0-9]+",
+    "headers": {
+      "Authorization": {
+        "matches": "Bearer .+"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"productId\": {{request.pathSegments.[3]}}, \"price\": {{request.pathSegments.[3]}}00.00, \"currency\": \"IDR\"}",
+    "delayDistribution": {
+      "type": "lognormal",
+      "median": @PRICE_MEDIAN_MS@,
+      "sigma": @PRICE_SIGMA@
+    }
+  }
+}

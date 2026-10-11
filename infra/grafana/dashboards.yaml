@@ -1,0 +1,9 @@
+# Provisioning dashboard lab ke Grafana di dalam grafana/otel-lgtm.
+apiVersion: 1
+
+providers:
+  - name: "ecommerce-perf"
+    type: file
+    options:
+      path: /otel-lgtm/ecommerce-perf
+      foldersFromFilesStructure: false

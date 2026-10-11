@@ -1,0 +1,220 @@
+# Infrastruktur lab ecommerce-perf.
+#
+# Profil:
+#   (tanpa profil)  postgres, redis, otel-lgtm, pricing-stub
+#                   -> service dijalankan dari IDE
+#   bench           + catalog-service dan order-service di container,
+#                     memakai jar dari target/ (cukup ./mvnw package lalu
+#                     restart container, tanpa build image)
+#   seed            pengisi data volume besar (sekali jalan)
+#   loadtest        k6 (dijalankan dengan "docker compose run")
+#   tools           image JDK untuk infra/jcmd.sh (cukup di-pull)
+#
+# Semua container diberi batas CPU dan memori agar tidak saling berebut
+# saat pengukuran. memswap_limit sama dengan mem_limit: tanpa swap,
+# seperti di Kubernetes, container yang melewati limit dimatikan (exit
+# 137), bukan diam-diam melambat karena swapping. Port hanya dibuka di
+# 127.0.0.1.
+name: ecommerce-perf
+
+x-app: &app
+  image: eclipse-temurin:21.0.12.1_1-jre
+  profiles: [bench]
+  command: ["sh", "-c", "exec java $${JAVA_OPTS} -jar /app/app.jar"]
+  stop_grace_period: 40s
+
+services:
+  postgres:
+    image: postgres:17.11
+    command: >-
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c max_connections=100
+      -c shared_buffers=256MB
+    environment:
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:?buat infra/.env dulu}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?buat infra/.env dulu}
+      CATALOG_DB_USER: ${CATALOG_DB_USER}
+      CATALOG_DB_PASSWORD: ${CATALOG_DB_PASSWORD}
+      ORDER_DB_USER: ${ORDER_DB_USER}
+      ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # lewat TCP: server sementara saat init hanya membuka socket Unix
+      test:
+        - CMD-SHELL
+        - pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d postgres
+      interval: 2s
+      timeout: 3s
+      retries: 60
+    shm_size: 256m
+    cpus: 2
+    mem_limit: 1g
+    memswap_limit: 1g
+
+  redis:
+    image: redis:7.4.11-alpine
+    command: >-
+      redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+      --save "" --appendonly no
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    cpus: 0.5
+    mem_limit: 256m
+    memswap_limit: 256m
+
+  otel-lgtm:
+    image: grafana/otel-lgtm:0.36.0
+    ports:
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    volumes:
+      - ./grafana/dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/ecommerce-perf.yaml:ro
+      - ./grafana/ecommerce-perf.json:/otel-lgtm/ecommerce-perf/ecommerce-perf.json:ro
+    cpus: 1
+    mem_limit: 1536m
+    memswap_limit: 1536m
+
+  pricing-stub:
+    image: wiremock/wiremock:3.13.2
+    entrypoint: ["/bin/sh", "/stub/start.sh"]
+    environment:
+      # latensi lognormal: median dalam milidetik, sigma menentukan ekor
+      PRICE_MEDIAN_MS: ${PRICE_MEDIAN_MS:-40}
+      PRICE_SIGMA: ${PRICE_SIGMA:-0.6}
+      TOKEN_MEDIAN_MS: ${TOKEN_MEDIAN_MS:-80}
+      TOKEN_SIGMA: ${TOKEN_SIGMA:-0.4}
+      TOKEN_TTL_SECONDS: ${TOKEN_TTL_SECONDS:-5}
+      JAVA_OPTS: -Xmx256m
+    ports:
+      - "127.0.0.1:8083:8080"
+    volumes:
+      - ./pricing-stub:/stub:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/__admin/health"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    cpus: 1
+    mem_limit: 512m
+    memswap_limit: 512m
+
+  catalog-service:
+    <<: *app
+    environment:
+      SPRING_PROFILES_ACTIVE: bench
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      OTEL_HOST: otel-lgtm
+      CATALOG_DB_USER: ${CATALOG_DB_USER}
+      CATALOG_DB_PASSWORD: ${CATALOG_DB_PASSWORD}
+      JAVA_OPTS: ${CATALOG_JAVA_OPTS:-}
+    volumes:
+      - ../catalog-service/target/catalog-service.jar:/app/app.jar:ro
+      - ./out:/out
+    ports:
+      - "127.0.0.1:8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      otel-lgtm:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8081/actuator/health"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+      start_period: 10s
+    cpus: 2
+    mem_limit: ${CATALOG_MEM_LIMIT:-1g}
+    memswap_limit: ${CATALOG_MEM_LIMIT:-1g}
+
+  order-service:
+    <<: *app
+    environment:
+      SPRING_PROFILES_ACTIVE: bench
+      DB_HOST: postgres
+      OTEL_HOST: otel-lgtm
+      CATALOG_HOST: catalog-service
+      PRICING_HOST: pricing-stub
+      PRICING_PORT: 8080
+      ORDER_DB_USER: ${ORDER_DB_USER}
+      ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
+      PRICING_CLIENT_SECRET: ${PRICING_CLIENT_SECRET}
+      JAVA_OPTS: ${ORDER_JAVA_OPTS:-}
+    volumes:
+      - ../order-service/target/order-service.jar:/app/app.jar:ro
+      - ./out:/out
+    ports:
+      - "127.0.0.1:8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+      pricing-stub:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8082/actuator/health"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+      start_period: 10s
+    cpus: 2
+    mem_limit: ${ORDER_MEM_LIMIT:-1g}
+    memswap_limit: ${ORDER_MEM_LIMIT:-1g}
+
+  seed:
+    image: postgres:17.11
+    profiles: [seed]
+    entrypoint: ["bash", "/seed/seed.sh"]
+    environment:
+      PGHOST: postgres
+      CATALOG_DB_USER: ${CATALOG_DB_USER}
+      CATALOG_DB_PASSWORD: ${CATALOG_DB_PASSWORD}
+      ORDER_DB_USER: ${ORDER_DB_USER}
+      ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
+    volumes:
+      - ../seed:/seed:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    cpus: 2
+    mem_limit: 512m
+    memswap_limit: 512m
+
+  k6:
+    image: grafana/k6:2.3.0
+    profiles: [loadtest]
+    environment:
+      CATALOG_URL: ${CATALOG_URL:-http://catalog-service:8081}
+      ORDER_URL: ${ORDER_URL:-http://order-service:8082}
+    volumes:
+      - ../load-test:/scripts:ro
+      - ../load-test/out:/out
+    cpus: 2
+    mem_limit: 512m
+    memswap_limit: 512m
+
+  # Tidak pernah dijalankan sebagai service: hanya agar image JDK ikut
+  # di-pull untuk infra/jcmd.sh (image aplikasi berisi JRE tanpa jcmd).
+  jdk-tools:
+    image: eclipse-temurin:21.0.12.1_1-jdk
+    profiles: [tools]
+    command: ["jcmd", "-h"]
+
+volumes:
+  pgdata:

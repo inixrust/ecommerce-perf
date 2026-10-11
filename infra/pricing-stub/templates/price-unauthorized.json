@@ -1,0 +1,14 @@
+{
+  "priority": 10,
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/api/v1/prices/.*"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "Content-Type": "application/problem+json"
+    },
+    "body": "{\"title\": \"Unauthorized\", \"status\": 401}"
+  }
+}

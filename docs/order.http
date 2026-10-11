@@ -1,0 +1,26 @@
+### Buat order (memanggil catalog-service dan pricing-stub)
+POST http://localhost:8082/api/v1/orders
+Content-Type: application/json
+
+{
+  "customerId": 7,
+  "items": [
+    { "productId": 15, "quantity": 1 },
+    { "productId": 23, "quantity": 2 }
+  ]
+}
+
+### Produk tidak aktif (422): produk 70 berstatus INACTIVE pada seed
+POST http://localhost:8082/api/v1/orders
+Content-Type: application/json
+
+{ "customerId": 7, "items": [ { "productId": 70, "quantity": 1 } ] }
+
+### Riwayat order pelanggan besar
+GET http://localhost:8082/api/v1/customers/1/orders?page=0&size=5
+
+### Token pricing (langsung ke stub)
+POST http://localhost:8083/oauth/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&client_id=order-service&client_secret=x

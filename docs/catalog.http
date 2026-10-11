@@ -1,0 +1,37 @@
+### Daftar produk ACTIVE di satu kategori daun
+GET http://localhost:8081/api/v1/products?categoryId=200&status=ACTIVE&page=0&size=5
+
+### Detail produk
+GET http://localhost:8081/api/v1/products/5
+
+### Produk yang tidak ada (404, ProblemDetail)
+GET http://localhost:8081/api/v1/products/999999
+
+### Ubah produk
+PUT http://localhost:8081/api/v1/products/5
+Content-Type: application/json
+
+{ "name": "Rok Polos Katun 5", "price": 125000, "status": "ACTIVE" }
+
+### Pencarian
+GET http://localhost:8081/api/v1/products/search?q=kaos&page=0&size=5
+
+### Pohon kategori
+GET http://localhost:8081/api/v1/categories/tree
+
+### Tambah kategori
+POST http://localhost:8081/api/v1/categories
+Content-Type: application/json
+
+{ "name": "Kategori Coba", "parentId": 11 }
+
+### Impor produk
+POST http://localhost:8081/api/v1/products/import
+Content-Type: application/json
+
+{
+  "products": [
+    { "sku": "HTTP-0001", "name": "Kaos Coba", "description": "Contoh",
+      "price": 50000, "status": "DRAFT", "categoryId": 111 }
+  ]
+}
