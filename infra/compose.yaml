@@ -119,7 +119,18 @@ services:
       OTEL_HOST: otel-lgtm
       CATALOG_DB_USER: ${CATALOG_DB_USER}
       CATALOG_DB_PASSWORD: ${CATALOG_DB_PASSWORD}
-      JAVA_OPTS: ${CATALOG_JAVA_OPTS:-}
+      # Anggaran memori untuk limit 768 MB (Latihan 5.1). NMT mengukur
+      # non-heap sekitar 300 MB (metaspace, code cache, symbol, thread);
+      # malloc glibc di luar NMT menambah 50-75 MB di bawah beban. Heap
+      # maksimum 30% (sekitar 230 MB, dua kali live set); metaspace
+      # dibatasi agar kebocoran class tidak menembus limit. Code cache
+      # tidak dibatasi: batas kecil memicu Full GC "CodeCache GC
+      # Threshold" berulang, sedangkan yang terpakai hanya sekitar 60 MB.
+      JAVA_OPTS: >-
+        ${CATALOG_JAVA_OPTS:--XX:MaxRAMPercentage=30
+        -XX:MaxMetaspaceSize=160m
+        -XX:NativeMemoryTracking=summary
+        -Xlog:gc*:file=/out/gc-catalog.log:time,uptime,level,tags:filecount=3,filesize=10m}
     volumes:
       - ../catalog-service/target/catalog-service.jar:/app/app.jar:ro
       - ./out:/out
@@ -139,8 +150,9 @@ services:
       retries: 40
       start_period: 10s
     cpus: 2
-    mem_limit: ${CATALOG_MEM_LIMIT:-1g}
-    memswap_limit: ${CATALOG_MEM_LIMIT:-1g}
+    # Rencana kapasitas: 768 MB per instance catalog-service
+    mem_limit: ${CATALOG_MEM_LIMIT:-768m}
+    memswap_limit: ${CATALOG_MEM_LIMIT:-768m}
 
   order-service:
     <<: *app
