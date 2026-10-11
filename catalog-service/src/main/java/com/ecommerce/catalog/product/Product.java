@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "products")
@@ -50,7 +51,9 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    // TODO (Latihan 2.3)
+    // Gambar (to-many) tidak di-JOIN pada query berhalaman; saat pertama
+    // diakses, Hibernate memuat gambar untuk sampai 50 produk sekaligus.
+    @BatchSize(size = 50)
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL,
             orphanRemoval = true)
     @OrderBy("position")
