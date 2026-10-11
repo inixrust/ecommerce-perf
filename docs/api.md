@@ -80,17 +80,29 @@ Respons 200: `{ "imported": 1 }`. 400 bila validasi gagal atau ada
 
 ### GET /api/v1/products/search
 
-Pencarian berdasarkan nama produk.
+Pencarian berdasarkan nama produk dengan keyset pagination.
 
-| Parameter | Tipe   | Default | Keterangan                                  |
-| --------- | ------ | ------- | ------------------------------------------- |
+| Parameter | Tipe   | Default | Keterangan                                   |
+| --------- | ------ | ------- | -------------------------------------------- |
 | `q`       | string | wajib   | kata kunci; huruf dan angka, minimal 2 huruf |
-| `page`    | int    | 0       | nomor halaman                               |
-| `size`    | int    | 20      | ukuran halaman                              |
+| `after`   | long   | 0       | `nextAfter` dari respons sebelumnya          |
+| `size`    | int    | 20      | jumlah hasil per potong                      |
 
-Respons 200 berbentuk halaman yang sama dengan daftar produk; setiap hasil
-berisi `id`, `sku`, `name`, `price`, dan `snippet` (potongan deskripsi,
-kata yang cocok diapit `**`). 400 bila `q` tidak berisi kata kunci.
+Respons 200:
+
+```json
+{
+  "content": [
+    { "id": 150, "sku": "SKU-000150", "name": "Kaos Elegan Katun 150",
+      "price": 207850.00, "snippet": "mudah rusak ..." }
+  ],
+  "nextAfter": 1050
+}
+```
+
+`nextAfter` bernilai `null` pada potongan terakhir. Setiap hasil berisi
+`snippet` (potongan deskripsi, kata yang cocok diapit `**`). 400 bila `q`
+tidak berisi kata kunci atau `size` kurang dari 1.
 
 ### GET /api/v1/categories/tree
 
@@ -148,4 +160,6 @@ variable di `infra/compose.yaml`.
 
 ## Riwayat perubahan
 
-Belum ada perubahan dari tag `start`.
+| Tag              | Perubahan                                                       |
+| ---------------- | --------------------------------------------------------------- |
+| `lab-2.5-solusi` | pencarian: `page` diganti `after`; respons memuat `nextAfter`, tanpa `totalElements` dan `totalPages` |

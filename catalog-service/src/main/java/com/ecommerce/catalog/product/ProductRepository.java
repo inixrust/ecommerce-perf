@@ -1,5 +1,7 @@
 package com.ecommerce.catalog.product;
 
+import java.util.List;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -17,6 +19,10 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
     @EntityGraph(attributePaths = "category")
     Page<Product> findAll(Specification<Product> spec, Pageable pageable);
 
-    @Query("select p from Product p where lower(p.name) like :pattern")
-    Page<Product> searchByName(String pattern, Pageable pageable);
+    @Query("""
+            select p from Product p
+            where lower(p.name) like :pattern and p.id > :after
+            order by p.id""")
+    List<Product> searchByNameAfter(String pattern, long after,
+            Limit limit);
 }

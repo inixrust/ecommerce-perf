@@ -14,7 +14,10 @@ Content-Type: application/json
 { "name": "Rok Polos Katun 5", "price": 125000, "status": "ACTIVE" }
 
 ### Pencarian
-GET http://localhost:8081/api/v1/products/search?q=kaos&page=0&size=5
+GET http://localhost:8081/api/v1/products/search?q=kaos&size=5
+
+### Pencarian, potongan berikutnya (isi after dengan nextAfter)
+GET http://localhost:8081/api/v1/products/search?q=kaos&after=1050&size=5
 
 ### Pohon kategori
 GET http://localhost:8081/api/v1/categories/tree
