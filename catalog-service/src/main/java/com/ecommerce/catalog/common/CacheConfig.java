@@ -3,6 +3,7 @@ package com.ecommerce.catalog.common;
 import com.ecommerce.catalog.product.ProductDetail;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +31,7 @@ public class CacheConfig {
 
     public static final String PRODUCT_DETAIL = "product-detail";
     public static final String CATEGORY_TREE = "category-tree";
+    public static final String SEARCH_RESULTS = "search-results";
     public static final String LOCAL = "localCacheManager";
 
     @Bean
@@ -60,12 +62,20 @@ public class CacheConfig {
      * dibayar: instance lain baru melihat perubahan setelah TTL habis.
      */
     @Bean(LOCAL)
-    CaffeineCacheManager localCacheManager() {
+    CaffeineCacheManager localCacheManager(
+            @Value("${catalog.search.cache.maximum-size}")
+            long searchMaximumSize) {
         var manager = new CaffeineCacheManager(CATEGORY_TREE);
         manager.setCaffeine(Caffeine.newBuilder()
                 .maximumSize(10)
                 .expireAfterWrite(Duration.ofMinutes(5))
                 .recordStats());
+        // kunci tak terbatas (q, after, size): batasi jumlah entry
+        manager.registerCustomCache(SEARCH_RESULTS, Caffeine.newBuilder()
+                .maximumSize(searchMaximumSize)
+                .expireAfterWrite(Duration.ofMinutes(1))
+                .recordStats()
+                .build());
         return manager;
     }
 }

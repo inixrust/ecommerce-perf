@@ -1,11 +1,10 @@
 package com.ecommerce.catalog.search;
 
+import com.ecommerce.catalog.common.CacheConfig;
 import com.ecommerce.catalog.product.Product;
 import com.ecommerce.catalog.product.ProductRepository;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 
@@ -15,9 +14,6 @@ public class ProductSearchService {
     private final ProductRepository products;
     private final KeywordNormalizer normalizer;
     private final SnippetBuilder snippets;
-    // hasil pencarian yang sama tidak perlu ke database lagi
-    private final Map<String, SearchSlice> results =
-            new ConcurrentHashMap<>();
 
     public ProductSearchService(ProductRepository products,
             KeywordNormalizer normalizer, SnippetBuilder snippets) {
@@ -30,14 +26,14 @@ public class ProductSearchService {
      * Keyset pagination: lanjut dari id terakhir halaman sebelumnya,
      * sehingga biaya query tidak tumbuh seiring kedalaman halaman dan
      * tidak perlu count(*) di setiap halaman.
+     *
+     * Hasil di-cache lokal dengan batas jumlah entry dan TTL: kombinasi
+     * q/after/size praktis tak terbatas, jadi cache tanpa batas tumbuh
+     * sampai heap habis.
      */
+    @Cacheable(cacheNames = CacheConfig.SEARCH_RESULTS,
+            cacheManager = CacheConfig.LOCAL)
     public SearchSlice search(String q, long after, int size) {
-        String key = q.toLowerCase(Locale.ROOT) + "|" + after + "|"
-                + size;
-        return results.computeIfAbsent(key, k -> find(q, after, size));
-    }
-
-    private SearchSlice find(String q, long after, int size) {
         if (size < 1) {
             throw new IllegalArgumentException("size must be at least 1");
         }

@@ -3,8 +3,6 @@ package com.ecommerce.order.customer;
 import com.ecommerce.order.common.NotFoundException;
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.springframework.stereotype.Service;
@@ -12,6 +10,10 @@ import org.springframework.stereotype.Service;
 /**
  * Ringkasan dihitung langsung dengan SQL agregat lewat JDBC, tanpa
  * memuat entity: satu query untuk seluruh riwayat pelanggan.
+ *
+ * Setiap sumber daya JDBC ditutup lewat try-with-resources, termasuk
+ * ketika method keluar dengan exception (mis. 404 pelanggan tidak ada).
+ * Koneksi yang tidak dikembalikan tidak pernah kembali ke pool.
  */
 @Service
 public class CustomerSummaryService {
@@ -29,21 +31,21 @@ public class CustomerSummaryService {
     }
 
     public CustomerSummary summary(Long customerId) throws SQLException {
-        Connection connection = dataSource.getConnection();
-        PreparedStatement statement =
-                connection.prepareStatement(SUMMARY_SQL);
-        statement.setLong(1, customerId);
-        ResultSet rows = statement.executeQuery();
-        rows.next();
-        long orderCount = rows.getLong(1);
-        BigDecimal totalSpent = rows.getBigDecimal(2);
-        rows.close();
-        statement.close();
-        if (orderCount == 0 && !exists(connection, customerId)) {
-            throw new NotFoundException("Customer", customerId);
+        try (var connection = dataSource.getConnection();
+                var statement = connection.prepareStatement(SUMMARY_SQL)) {
+            statement.setLong(1, customerId);
+            long orderCount;
+            BigDecimal totalSpent;
+            try (var rows = statement.executeQuery()) {
+                rows.next();
+                orderCount = rows.getLong(1);
+                totalSpent = rows.getBigDecimal(2);
+            }
+            if (orderCount == 0 && !exists(connection, customerId)) {
+                throw new NotFoundException("Customer", customerId);
+            }
+            return new CustomerSummary(customerId, orderCount, totalSpent);
         }
-        connection.close();
-        return new CustomerSummary(customerId, orderCount, totalSpent);
     }
 
     private static boolean exists(Connection connection, Long customerId)
