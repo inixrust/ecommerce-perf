@@ -1,17 +1,22 @@
 package com.ecommerce.order.client;
 
 import java.net.URI;
+import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** Alamat layanan lain yang dipanggil order-service. */
+/** Alamat dan batas waktu layanan lain yang dipanggil order-service. */
 @ConfigurationProperties("clients")
 public record ClientProperties(Catalog catalog, Pricing pricing) {
 
     public record Catalog(URI baseUrl) {
     }
 
-    // TODO (Latihan 3.3)
+    /**
+     * connectTimeout: batas membuka koneksi TCP. readTimeout: batas
+     * menunggu respons. Tanpa keduanya, request menunggu selamanya.
+     */
     public record Pricing(
-            URI baseUrl, String clientId, String clientSecret) {
+            URI baseUrl, String clientId, String clientSecret,
+            Duration connectTimeout, Duration readTimeout) {
     }
 }

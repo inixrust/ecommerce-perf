@@ -9,6 +9,8 @@ import com.ecommerce.order.customer.CustomerRepository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -41,8 +43,6 @@ public class OrderService {
         if (!customers.existsById(customerId)) {
             throw new NotFoundException("Customer", customerId);
         }
-        // TODO (Latihan 3.3)
-        List<PricedLine> lines = new ArrayList<>();
         for (CreateOrderRequest.Line line : request.items()) {
             ProductInfo product = catalog.product(line.productId());
             if (!product.isActive()) {
@@ -50,9 +50,16 @@ public class OrderService {
                         "Product " + line.productId()
                                 + " is not available");
             }
-            BigDecimal price = pricing.price(line.productId());
+        }
+        // satu panggilan paralel untuk semua harga, bukan satu per item
+        Map<Long, BigDecimal> prices = pricing.prices(request.items()
+                .stream()
+                .map(CreateOrderRequest.Line::productId)
+                .collect(Collectors.toSet()));
+        List<PricedLine> lines = new ArrayList<>();
+        for (CreateOrderRequest.Line line : request.items()) {
             lines.add(new PricedLine(line.productId(), line.quantity(),
-                    price));
+                    prices.get(line.productId())));
         }
         // TransactionTemplate, bukan @Transactional pada method lain di
         // kelas ini: panggilan this.method() tidak melewati proxy Spring.

@@ -167,6 +167,9 @@ order-service memanggil catalog-service (status produk) dan pricing
 | 400    | validasi request gagal                          |
 | 404    | pelanggan tidak ada                             |
 | 422    | produk tidak ada atau tidak berstatus `ACTIVE`  |
+| 502    | layanan lain menjawab dengan respons yang tidak dapat dipakai |
+| 503    | layanan lain tidak dapat dihubungi              |
+| 504    | pricing tidak menjawab dalam batas waktu (1 detik) |
 
 ### GET /api/v1/customers/{id}/orders
 
@@ -193,3 +196,4 @@ variable di `infra/compose.yaml`.
 | `demo-perf-06`   | detail produk dan respons pembuatan order menjadi DTO; tanpa `hibernateLazyInitializer` dan tanpa data pelanggan |
 | `demo-perf-09`   | `size` pada daftar produk dan pencarian dibatasi 1 sampai 100; di luar itu 400 |
 | `demo-perf-12`   | kompresi gzip; ETag dan `304 Not Modified` pada pohon kategori |
+| `lab-3.3-solusi` | pembuatan order dapat menjawab 504 (pricing lambat), 503, atau 502 |
