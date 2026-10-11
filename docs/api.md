@@ -67,6 +67,12 @@ Detail produk beserta kategori, jalur kategori, dan gambar.
 }
 ```
 
+### GET /api/v1/products/popular
+
+Produk yang paling sering dilihat (detail produk) sejak service start.
+Parameter `limit` 1 sampai 50 (default 10). Respons:
+`[{ "productId": 36, "views": 5 }]`.
+
 ### PUT /api/v1/products/{id}
 
 Mengubah nama, harga, dan status.
@@ -178,6 +184,11 @@ dan `size` (default 20). Setiap order memuat `id`, `status`, `total`,
 `createdAt`, dan `items` (`productId`, `quantity`, `unitPrice`).
 404 bila pelanggan tidak ada.
 
+### GET /api/v1/customers/{id}/summary
+
+Ringkasan belanja pelanggan: `{ "customerId": 1, "orderCount": 30,
+"totalSpent": 9000000.00 }`. 404 bila pelanggan tidak ada.
+
 ## pricing-stub (port 8083, WireMock)
 
 | Endpoint                   | Keterangan                                       |
@@ -197,3 +208,4 @@ variable di `infra/compose.yaml`.
 | `demo-perf-09`   | `size` pada daftar produk dan pencarian dibatasi 1 sampai 100; di luar itu 400 |
 | `demo-perf-12`   | kompresi gzip; ETag dan `304 Not Modified` pada pohon kategori |
 | `lab-3.3-solusi` | pembuatan order dapat menjawab 504 (pricing lambat), 503, atau 502 |
+| `challenge`      | endpoint baru: produk populer dan ringkasan pelanggan |

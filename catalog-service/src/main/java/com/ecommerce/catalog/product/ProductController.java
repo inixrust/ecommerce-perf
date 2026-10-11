@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PositiveOrZero;
+import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,11 +22,13 @@ public class ProductController {
 
     private final ProductService service;
     private final ProductImportService importService;
+    private final ViewCounter views;
 
     public ProductController(ProductService service,
-            ProductImportService importService) {
+            ProductImportService importService, ViewCounter views) {
         this.service = service;
         this.importService = importService;
+        this.views = views;
     }
 
     @GetMapping
@@ -40,7 +43,16 @@ public class ProductController {
 
     @GetMapping("/{id:\\d+}")
     public ProductDetail get(@PathVariable Long id) {
-        return service.get(id);
+        ProductDetail detail = service.get(id);
+        views.record(id);
+        return detail;
+    }
+
+    @GetMapping("/popular")
+    public List<PopularProduct> popular(
+            @RequestParam(defaultValue = "10") @Min(1) @Max(50)
+            int limit) {
+        return views.top(limit);
     }
 
     @PutMapping("/{id:\\d+}")
