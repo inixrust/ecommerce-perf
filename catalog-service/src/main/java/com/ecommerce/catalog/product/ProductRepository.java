@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 public interface ProductRepository extends JpaRepository<Product, Long>,
         JpaSpecificationExecutor<Product> {
 
+    // TODO (Latihan 2.3)
+
     @Query("select p from Product p where lower(p.name) like :pattern")
     Page<Product> searchByName(String pattern, Pageable pageable);
 }

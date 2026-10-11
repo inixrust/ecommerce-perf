@@ -50,6 +50,7 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    // TODO (Latihan 2.3)
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL,
             orphanRemoval = true)
     @OrderBy("position")
