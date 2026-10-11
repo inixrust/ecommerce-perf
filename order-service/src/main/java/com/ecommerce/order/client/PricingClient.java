@@ -18,6 +18,7 @@ public class PricingClient {
         this.tokens = tokens;
     }
 
+    // TODO (Latihan 3.3)
     public BigDecimal price(Long productId) {
         PriceQuote quote = http.get()
                 .uri("/api/v1/prices/{id}", productId)

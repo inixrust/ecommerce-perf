@@ -8,6 +8,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import java.util.List;
 import java.util.function.Consumer;
 
 /** Stub HTTP yang dipakai berulang oleh test order-service. */
@@ -89,6 +90,15 @@ public class Stubs {
         return pricing.findAll(
                 getRequestedFor(urlPathMatching("/api/v1/prices/.*")))
                 .size();
+    }
+
+    /** Header traceparent setiap request harga, null bila tidak ada. */
+    public List<String> pricingTraceparents() {
+        return pricing.findAll(
+                getRequestedFor(urlPathMatching("/api/v1/prices/.*")))
+                .stream()
+                .map(request -> request.getHeader("traceparent"))
+                .toList();
     }
 
     public int tokenRequests() {

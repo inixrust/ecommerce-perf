@@ -41,6 +41,7 @@ public class OrderService {
         if (!customers.existsById(customerId)) {
             throw new NotFoundException("Customer", customerId);
         }
+        // TODO (Latihan 3.3)
         List<PricedLine> lines = new ArrayList<>();
         for (CreateOrderRequest.Line line : request.items()) {
             ProductInfo product = catalog.product(line.productId());

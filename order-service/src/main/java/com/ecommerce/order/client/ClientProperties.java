@@ -10,6 +10,7 @@ public record ClientProperties(Catalog catalog, Pricing pricing) {
     public record Catalog(URI baseUrl) {
     }
 
+    // TODO (Latihan 3.3)
     public record Pricing(
             URI baseUrl, String clientId, String clientSecret) {
     }

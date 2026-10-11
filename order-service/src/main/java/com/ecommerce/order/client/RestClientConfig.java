@@ -19,6 +19,7 @@ class RestClientConfig {
                 .build();
     }
 
+    // TODO (Latihan 3.3)
     @Bean
     RestClient pricingRestClient(RestClient.Builder builder,
             ClientProperties properties) {
