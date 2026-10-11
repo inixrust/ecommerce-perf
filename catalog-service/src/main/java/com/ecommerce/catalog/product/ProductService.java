@@ -41,11 +41,13 @@ public class ProductService {
         return PageResponse.of(result);
     }
 
+    // TODO (Latihan 4.1)
     @Transactional(readOnly = true)
     public ProductDetail get(Long id) {
         return toDetail(load(id));
     }
 
+    // TODO (Latihan 4.1)
     @Transactional
     public ProductDetail update(Long id, UpdateProductRequest request) {
         Product product = load(id);
