@@ -31,6 +31,7 @@ public class PricingTokenProvider {
         this.properties = properties.pricing();
     }
 
+    // TODO (Latihan 4.3)
     public synchronized String token() {
         if (Instant.now().isAfter(expiresAt.minus(REFRESH_MARGIN))) {
             TokenResponse response = requestToken();
