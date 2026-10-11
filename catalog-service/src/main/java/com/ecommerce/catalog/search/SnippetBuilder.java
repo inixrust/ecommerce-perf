@@ -33,6 +33,7 @@ public class SnippetBuilder {
         }
         int start = Math.max(0, match - WINDOW / 2);
         int end = Math.min(words.length, start + WINDOW);
+        // TODO (Latihan 1.1)
         String snippet = "";
         for (int i = start; i < end; i++) {
             String keyword = normalizer.normalize(words[i]);

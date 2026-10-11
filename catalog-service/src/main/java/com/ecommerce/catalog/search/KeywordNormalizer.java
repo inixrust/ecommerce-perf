@@ -27,6 +27,7 @@ public class KeywordNormalizer {
     }
 
     /** Mengembalikan null bila kata tidak layak menjadi kata kunci. */
+    // TODO (Latihan 1.1)
     public String normalize(String word) {
         String lower = word.toLowerCase(Locale.ROOT);
         var decomposed = Normalizer.normalize(lower, Normalizer.Form.NFD);
