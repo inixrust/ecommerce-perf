@@ -27,7 +27,7 @@ Daftar produk dengan filter opsional dan paginasi.
 | `categoryId` | long    | -       | filter kategori                     |
 | `status`     | enum    | -       | `ACTIVE`, `INACTIVE`, atau `DRAFT`  |
 | `page`       | int     | 0       | nomor halaman, mulai dari 0         |
-| `size`       | int     | 20      | ukuran halaman                      |
+| `size`       | int     | 20      | ukuran halaman, 1 sampai 100        |
 
 Respons 200:
 
@@ -45,7 +45,7 @@ Respons 200:
 }
 ```
 
-Error: 400 bila `size` kurang dari 1 atau `page` negatif.
+Error: 400 bila `size` di luar 1 sampai 100 atau `page` negatif.
 
 ### GET /api/v1/products/{id}
 
@@ -99,7 +99,7 @@ Pencarian berdasarkan nama produk dengan keyset pagination.
 | --------- | ------ | ------- | -------------------------------------------- |
 | `q`       | string | wajib   | kata kunci; huruf dan angka, minimal 2 huruf |
 | `after`   | long   | 0       | `nextAfter` dari respons sebelumnya          |
-| `size`    | int    | 20      | jumlah hasil per potong                      |
+| `size`    | int    | 20      | jumlah hasil per potong, 1 sampai 100        |
 
 Respons 200:
 
@@ -185,3 +185,4 @@ variable di `infra/compose.yaml`.
 | ---------------- | --------------------------------------------------------------- |
 | `lab-2.5-solusi` | pencarian: `page` diganti `after`; respons memuat `nextAfter`, tanpa `totalElements` dan `totalPages` |
 | `demo-perf-06`   | detail produk dan respons pembuatan order menjadi DTO; tanpa `hibernateLazyInitializer` dan tanpa data pelanggan |
+| `demo-perf-09`   | `size` pada daftar produk dan pencarian dibatasi 1 sampai 100; di luar itu 400 |

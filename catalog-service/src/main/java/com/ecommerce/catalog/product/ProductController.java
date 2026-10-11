@@ -1,7 +1,11 @@
 package com.ecommerce.catalog.product;
 
 import com.ecommerce.catalog.common.PageResponse;
+import com.ecommerce.catalog.common.Paging;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,8 +32,9 @@ public class ProductController {
     public PageResponse<ProductSummary> list(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) ProductStatus status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @PositiveOrZero int page,
+            @RequestParam(defaultValue = "20") @Min(1)
+            @Max(Paging.MAX_SIZE) int size) {
         return service.list(categoryId, status, page, size);
     }
 

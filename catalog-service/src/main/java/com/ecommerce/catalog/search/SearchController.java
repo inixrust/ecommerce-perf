@@ -1,5 +1,9 @@
 package com.ecommerce.catalog.search;
 
+import com.ecommerce.catalog.common.Paging;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,8 +23,9 @@ public class SearchController {
     @GetMapping
     public SearchSlice search(
             @RequestParam String q,
-            @RequestParam(defaultValue = "0") long after,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @PositiveOrZero long after,
+            @RequestParam(defaultValue = "20") @Min(1)
+            @Max(Paging.MAX_SIZE) int size) {
         return service.search(q, after, size);
     }
 }
