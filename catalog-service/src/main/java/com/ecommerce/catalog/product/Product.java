@@ -16,6 +16,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -27,8 +28,13 @@ import org.hibernate.annotations.BatchSize;
 @Table(name = "products")
 public class Product {
 
+    // SEQUENCE + allocationSize 50 (pooled): Hibernate mengambil 50 ID
+    // sekaligus, jadi INSERT bisa dikirim dalam batch JDBC.
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE,
+            generator = "products_seq")
+    @SequenceGenerator(name = "products_seq",
+            sequenceName = "products_seq", allocationSize = 50)
     private Long id;
 
     @Column(nullable = false, unique = true, length = 40)

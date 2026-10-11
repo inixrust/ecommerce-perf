@@ -31,6 +31,19 @@ SELECT 'HDP-' || lpad(g::text, 4, '0'),
        6
 FROM generate_series(1, 10) AS g;
 
+-- Bila ID produk berasal dari sequence Hibernate (demo PERF-07),
+-- naikkan sequence melewati data uji (lihat V3__sequence_produk.sql).
+-- Sequence hanya boleh naik: aplikasi di konteks test yang dipakai
+-- bersama masih memegang blok ID dari kelas test sebelumnya. is_called
+-- selalu true agar pg_sequence_last_value tidak NULL di kelas berikutnya.
+-- to_regclass bernilai NULL bila sequence belum ada; setval(NULL, ...)
+-- tidak melakukan apa pun.
+SELECT setval(to_regclass('public.products_seq'),
+              greatest((SELECT max(id) FROM products),
+                       coalesce(pg_sequence_last_value(
+                           to_regclass('public.products_seq')), 0)) + 50,
+              true);
+
 -- Dua gambar per produk
 INSERT INTO product_images (product_id, url, position)
 SELECT p.id, 'https://img.example.com/' || p.sku || '-' || pos || '.jpg',
