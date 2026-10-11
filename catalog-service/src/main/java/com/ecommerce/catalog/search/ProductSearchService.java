@@ -23,6 +23,7 @@ public class ProductSearchService {
         this.snippets = snippets;
     }
 
+    // TODO (Latihan 2.5)
     public PageResponse<SearchHit> search(String q, int page, int size) {
         List<String> keywords = normalizer.keywords(q);
         if (keywords.isEmpty()) {

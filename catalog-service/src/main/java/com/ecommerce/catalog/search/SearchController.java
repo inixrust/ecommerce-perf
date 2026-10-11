@@ -16,6 +16,7 @@ public class SearchController {
         this.service = service;
     }
 
+    // TODO (Latihan 2.5)
     @GetMapping
     public PageResponse<SearchHit> search(
             @RequestParam String q,
