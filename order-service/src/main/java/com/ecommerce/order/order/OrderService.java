@@ -28,6 +28,7 @@ public class OrderService {
         this.pricing = pricing;
     }
 
+    // TODO (Latihan 3.2)
     @Transactional
     public OrderView create(CreateOrderRequest request) {
         Customer customer = customers.findById(request.customerId())

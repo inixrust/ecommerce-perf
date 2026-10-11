@@ -8,21 +8,44 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import java.util.function.Consumer;
 
 /** Stub HTTP yang dipakai berulang oleh test order-service. */
 public class Stubs {
 
     private final WireMockServer catalog;
     private final WireMockServer pricing;
+    private final HttpObserver catalogObserver;
+    private final HttpObserver pricingObserver;
 
-    Stubs(WireMockServer catalog, WireMockServer pricing) {
+    Stubs(WireMockServer catalog, WireMockServer pricing,
+            HttpObserver catalogObserver, HttpObserver pricingObserver) {
         this.catalog = catalog;
         this.pricing = pricing;
+        this.catalogObserver = catalogObserver;
+        this.pricingObserver = pricingObserver;
     }
 
     public void reset() {
         catalog.resetAll();
         pricing.resetAll();
+        catalogObserver.reset();
+        pricingObserver.reset();
+    }
+
+    /**
+     * Callback yang dipanggil saat stub catalog atau pricing mulai
+     * melayani request ("GET /api/v1/prices/401"), selagi aplikasi masih
+     * menunggu jawaban.
+     */
+    public void onRequest(Consumer<String> callback) {
+        catalogObserver.onRequest(callback);
+        pricingObserver.onRequest(callback);
+    }
+
+    /** Jumlah maksimum request pricing yang dilayani bersamaan. */
+    public int maxConcurrentPricingRequests() {
+        return pricingObserver.maxInFlight();
     }
 
     public void product(long id, String status) {

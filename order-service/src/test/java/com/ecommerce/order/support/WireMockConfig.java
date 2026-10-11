@@ -11,23 +11,31 @@ import org.springframework.test.context.DynamicPropertyRegistrar;
 @TestConfiguration(proxyBeanMethods = false)
 public class WireMockConfig {
 
+    private final HttpObserver catalogObserver =
+            new HttpObserver("catalog-observer");
+    private final HttpObserver pricingObserver =
+            new HttpObserver("pricing-observer");
+
     @Bean(destroyMethod = "stop")
     WireMockServer catalogStub() {
-        var server = new WireMockServer(options().dynamicPort());
+        var server = new WireMockServer(options().dynamicPort()
+                .extensions(catalogObserver));
         server.start();
         return server;
     }
 
     @Bean(destroyMethod = "stop")
     WireMockServer pricingStub() {
-        var server = new WireMockServer(options().dynamicPort());
+        var server = new WireMockServer(options().dynamicPort()
+                .extensions(pricingObserver));
         server.start();
         return server;
     }
 
     @Bean
     Stubs stubs(WireMockServer catalogStub, WireMockServer pricingStub) {
-        return new Stubs(catalogStub, pricingStub);
+        return new Stubs(catalogStub, pricingStub, catalogObserver,
+                pricingObserver);
     }
 
     @Bean
