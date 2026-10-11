@@ -30,7 +30,9 @@ public class ProductService {
                 ProductSpecifications.hasStatus(status));
         var pageable = PageRequest.of(page, size, Sort.by("id"));
         Page<Product> result = products.findAll(filter, pageable);
-        log.debug("Products loaded: " + result.getContent());
+        // placeholder {}: pesan hanya dirakit bila level DEBUG aktif
+        log.debug("Loaded {} products (category={}, status={})",
+                result.getNumberOfElements(), categoryId, status);
         return PageResponse.of(result.map(ProductService::toSummary));
     }
 
