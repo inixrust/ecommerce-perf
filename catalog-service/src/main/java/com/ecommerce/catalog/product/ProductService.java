@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,28 +19,26 @@ public class ProductService {
 
     private final ProductRepository products;
     private final CategoryRepository categories;
+    private final ProductSummaryQuery summaries;
 
     public ProductService(ProductRepository products,
-            CategoryRepository categories) {
+            CategoryRepository categories, ProductSummaryQuery summaries) {
         this.products = products;
         this.categories = categories;
+        this.summaries = summaries;
     }
 
-    // Tanpa OSIV, relasi LAZY hanya bisa dimuat di dalam transaksi.
     // readOnly: Hibernate tidak menyimpan snapshot untuk dirty checking
     // dan tidak melakukan flush di akhir transaksi.
     @Transactional(readOnly = true)
     public PageResponse<ProductSummary> list(Long categoryId,
             ProductStatus status, int page, int size) {
-        var filter = Specification.allOf(
-                ProductSpecifications.inCategory(categoryId),
-                ProductSpecifications.hasStatus(status));
-        var pageable = PageRequest.of(page, size, Sort.by("id"));
-        Page<Product> result = products.findAll(filter, pageable);
+        Page<ProductSummary> result = summaries.find(categoryId, status,
+                PageRequest.of(page, size));
         // placeholder {}: pesan hanya dirakit bila level DEBUG aktif
         log.debug("Loaded {} products (category={}, status={})",
                 result.getNumberOfElements(), categoryId, status);
-        return PageResponse.of(result.map(ProductService::toSummary));
+        return PageResponse.of(result);
     }
 
     @Transactional(readOnly = true)
@@ -73,14 +69,5 @@ public class ProductService {
                 new ProductDetail.CategoryRef(p.getCategory().getId(),
                         p.getCategory().getName()),
                 path, images, p.getCreatedAt(), p.getUpdatedAt());
-    }
-
-    private static ProductSummary toSummary(Product p) {
-        String thumbnail = p.getImages().isEmpty()
-                ? null
-                : p.getImages().getFirst().getUrl();
-        return new ProductSummary(p.getId(), p.getSku(), p.getName(),
-                p.getPrice(), p.getStatus(), p.getCategory().getName(),
-                thumbnail);
     }
 }
