@@ -1,8 +1,10 @@
 package com.ecommerce.catalog.common;
 
 import com.ecommerce.catalog.product.ProductDetail;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -27,6 +29,8 @@ import tools.jackson.databind.json.JsonMapper;
 public class CacheConfig {
 
     public static final String PRODUCT_DETAIL = "product-detail";
+    public static final String CATEGORY_TREE = "category-tree";
+    public static final String LOCAL = "localCacheManager";
 
     @Bean
     @Primary
@@ -48,5 +52,20 @@ public class CacheConfig {
                 .enableStatistics()
                 .transactionAware()
                 .build();
+    }
+
+    /**
+     * Cache lokal di heap setiap instance: tanpa network hop dan tanpa
+     * serialisasi. Cocok untuk data kecil yang jarang berubah. Harga yang
+     * dibayar: instance lain baru melihat perubahan setelah TTL habis.
+     */
+    @Bean(LOCAL)
+    CaffeineCacheManager localCacheManager() {
+        var manager = new CaffeineCacheManager(CATEGORY_TREE);
+        manager.setCaffeine(Caffeine.newBuilder()
+                .maximumSize(10)
+                .expireAfterWrite(Duration.ofMinutes(5))
+                .recordStats());
+        return manager;
     }
 }
