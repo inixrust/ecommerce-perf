@@ -18,6 +18,7 @@ public class CategoryService {
     }
 
     /** Menyusun pohon kategori dari satu query, lalu di memori. */
+    // TODO (Latihan 4.2)
     @Transactional(readOnly = true)
     public List<CategoryNode> tree() {
         List<Category> all = categories.findAll();
@@ -38,6 +39,7 @@ public class CategoryService {
         return roots;
     }
 
+    // TODO (Latihan 4.2)
     @Transactional
     public CategoryNode create(CreateCategoryRequest request) {
         Category parent = null;
