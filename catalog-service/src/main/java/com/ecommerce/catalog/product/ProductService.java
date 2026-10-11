@@ -1,11 +1,14 @@
 package com.ecommerce.catalog.product;
 
 import com.ecommerce.catalog.category.CategoryRepository;
+import com.ecommerce.catalog.common.CacheConfig;
 import com.ecommerce.catalog.common.NotFoundException;
 import com.ecommerce.catalog.common.PageResponse;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -41,13 +44,16 @@ public class ProductService {
         return PageResponse.of(result);
     }
 
-    // TODO (Latihan 4.1)
+    // sync = true: bila banyak request meminta id yang sama saat cache
+    // kosong, hanya satu yang memuat dari database (per instance).
+    @Cacheable(cacheNames = CacheConfig.PRODUCT_DETAIL, key = "#id",
+            sync = true)
     @Transactional(readOnly = true)
     public ProductDetail get(Long id) {
         return toDetail(load(id));
     }
 
-    // TODO (Latihan 4.1)
+    @CacheEvict(cacheNames = CacheConfig.PRODUCT_DETAIL, key = "#id")
     @Transactional
     public ProductDetail update(Long id, UpdateProductRequest request) {
         Product product = load(id);
