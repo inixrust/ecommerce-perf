@@ -3,6 +3,9 @@
 Kontrak ini berlaku untuk tag `start`. Perubahan kontrak pada tag
 berikutnya dicatat di bagian "Riwayat perubahan" di akhir berkas.
 
+Respons JSON di atas 2 KB dikompresi gzip bila klien mengirim
+`Accept-Encoding: gzip`.
+
 Semua error memakai format ProblemDetail (RFC 9457) dengan
 `Content-Type: application/problem+json`:
 
@@ -122,6 +125,9 @@ tidak berisi kata kunci atau `size` kurang dari 1.
 Seluruh pohon kategori:
 `[{ "id": 1, "name": "Pakaian", "children": [ ... ] }]`.
 
+Respons memuat header `ETag`. Request dengan `If-None-Match` berisi ETag
+yang sama dijawab `304 Not Modified` tanpa body.
+
 ### POST /api/v1/categories
 
 ```json
@@ -186,3 +192,4 @@ variable di `infra/compose.yaml`.
 | `lab-2.5-solusi` | pencarian: `page` diganti `after`; respons memuat `nextAfter`, tanpa `totalElements` dan `totalPages` |
 | `demo-perf-06`   | detail produk dan respons pembuatan order menjadi DTO; tanpa `hibernateLazyInitializer` dan tanpa data pelanggan |
 | `demo-perf-09`   | `size` pada daftar produk dan pencarian dibatasi 1 sampai 100; di luar itu 400 |
+| `demo-perf-12`   | kompresi gzip; ETag dan `304 Not Modified` pada pohon kategori |
