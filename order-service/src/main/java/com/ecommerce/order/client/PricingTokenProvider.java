@@ -3,6 +3,7 @@ package com.ecommerce.order.client;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.locks.ReentrantLock;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,12 @@ public class PricingTokenProvider {
     private final RestClient http;
     private final ClientProperties.Pricing properties;
 
+    // ReentrantLock, bukan synchronized: di Java 21 virtual thread yang
+    // menunggu I/O di dalam synchronized tetap menduduki carrier thread
+    // (pinned). Dengan ReentrantLock, virtual thread yang menunggu lock
+    // atau jawaban HTTP dilepas dari carrier.
+    private final ReentrantLock lock = new ReentrantLock();
+
     private String token;
     private Instant expiresAt = Instant.EPOCH;
 
@@ -31,14 +38,19 @@ public class PricingTokenProvider {
         this.properties = properties.pricing();
     }
 
-    // TODO (Latihan 4.3)
-    public synchronized String token() {
-        if (Instant.now().isAfter(expiresAt.minus(REFRESH_MARGIN))) {
-            TokenResponse response = requestToken();
-            token = response.accessToken();
-            expiresAt = Instant.now().plusSeconds(response.expiresIn());
+    public String token() {
+        lock.lock();
+        try {
+            if (Instant.now().isAfter(expiresAt.minus(REFRESH_MARGIN))) {
+                TokenResponse response = requestToken();
+                token = response.accessToken();
+                expiresAt = Instant.now()
+                        .plusSeconds(response.expiresIn());
+            }
+            return token;
+        } finally {
+            lock.unlock();
         }
-        return token;
     }
 
     private TokenResponse requestToken() {
