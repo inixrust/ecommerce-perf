@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import org.hibernate.annotations.BatchSize;
 
 /** Pesanan. Nama kelas bukan Order karena ORDER adalah kata kunci JPQL. */
 @Entity
@@ -43,7 +44,9 @@ public class CustomerOrder {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    // TODO (Latihan 2.4)
+    // Item dimuat untuk sampai 50 order sekaligus saat pertama diakses,
+    // bukan satu query per order.
+    @BatchSize(size = 50)
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
