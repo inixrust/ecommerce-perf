@@ -32,6 +32,7 @@ public class OrderController {
                 .body(order);
     }
 
+    // TODO (Latihan 3.1)
     @GetMapping("/api/v1/customers/{customerId}/orders")
     public PageResponse<OrderSummary> history(
             @PathVariable Long customerId,
