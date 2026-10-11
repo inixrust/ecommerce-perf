@@ -24,11 +24,11 @@ public class OrderController {
     }
 
     @PostMapping("/api/v1/orders")
-    public ResponseEntity<CustomerOrder> create(
+    public ResponseEntity<OrderView> create(
             @Valid @RequestBody CreateOrderRequest request) {
-        CustomerOrder order = orders.create(request);
+        OrderView order = orders.create(request);
         return ResponseEntity
-                .created(URI.create("/api/v1/orders/" + order.getId()))
+                .created(URI.create("/api/v1/orders/" + order.id()))
                 .body(order);
     }
 

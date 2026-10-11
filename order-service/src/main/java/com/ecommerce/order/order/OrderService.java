@@ -29,7 +29,7 @@ public class OrderService {
     }
 
     @Transactional
-    public CustomerOrder create(CreateOrderRequest request) {
+    public OrderView create(CreateOrderRequest request) {
         Customer customer = customers.findById(request.customerId())
                 .orElseThrow(() -> new NotFoundException(
                         "Customer", request.customerId()));
@@ -44,6 +44,6 @@ public class OrderService {
             BigDecimal price = pricing.price(line.productId());
             order.addItem(line.productId(), line.quantity(), price);
         }
-        return orders.save(order);
+        return OrderView.of(orders.save(order));
     }
 }

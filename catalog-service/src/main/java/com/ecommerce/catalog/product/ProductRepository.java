@@ -1,6 +1,7 @@
 package com.ecommerce.catalog.product;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,15 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
     @Override
     @EntityGraph(attributePaths = "category")
     Page<Product> findAll(Specification<Product> spec, Pageable pageable);
+
+    // Satu produk: aman mengambil kategori dan koleksi gambar dengan
+    // JOIN FETCH karena tidak ada paginasi.
+    @Query("""
+            select p from Product p
+            join fetch p.category
+            left join fetch p.images
+            where p.id = :id""")
+    Optional<Product> findDetailById(Long id);
 
     @Query("""
             select p from Product p

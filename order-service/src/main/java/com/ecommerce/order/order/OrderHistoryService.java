@@ -6,6 +6,7 @@ import com.ecommerce.order.customer.CustomerRepository;
 import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderHistoryService {
@@ -19,6 +20,8 @@ public class OrderHistoryService {
         this.customers = customers;
     }
 
+    // Tanpa OSIV, item (LAZY) hanya bisa dimuat di dalam transaksi
+    @Transactional(readOnly = true)
     public PageResponse<OrderSummary> history(Long customerId, int page,
             int size) {
         if (!customers.existsById(customerId)) {

@@ -49,7 +49,20 @@ Error: 400 bila `size` kurang dari 1 atau `page` negatif.
 
 ### GET /api/v1/products/{id}
 
-Detail produk beserta gambar dan kategori. 404 bila tidak ada.
+Detail produk beserta kategori, jalur kategori, dan gambar.
+404 bila tidak ada.
+
+```json
+{
+  "id": 5, "sku": "SKU-000005", "name": "Rok Polos Katun 5",
+  "description": "...", "price": 49595.00, "status": "ACTIVE",
+  "category": { "id": 116, "name": "Pakaian Grup 6 Seri 6" },
+  "categoryPath": ["Pakaian", "Pakaian Grup 6", "Pakaian Grup 6 Seri 6"],
+  "images": [ { "url": "https://img.example.com/SKU-000005-1.jpg",
+                "position": 1 } ],
+  "createdAt": "2025-01-01T00:25:00Z", "updatedAt": "2025-01-01T00:25:00Z"
+}
+```
 
 ### PUT /api/v1/products/{id}
 
@@ -133,7 +146,15 @@ Respons 201 dengan header `Location`. 404 bila `parentId` tidak ada.
 
 Maksimal 20 baris, `quantity` 1 sampai 100. Untuk setiap baris,
 order-service memanggil catalog-service (status produk) dan pricing
-(harga). Respons 201 dengan header `Location`.
+(harga). Respons 201 dengan header `Location`:
+
+```json
+{
+  "id": 50001, "customerId": 7, "status": "NEW", "total": 5800.00,
+  "createdAt": "2026-10-11T04:23:47.947Z",
+  "items": [ { "productId": 15, "quantity": 1, "unitPrice": 1500.00 } ]
+}
+```
 
 | Status | Kondisi                                         |
 | ------ | ----------------------------------------------- |
@@ -163,3 +184,4 @@ variable di `infra/compose.yaml`.
 | Tag              | Perubahan                                                       |
 | ---------------- | --------------------------------------------------------------- |
 | `lab-2.5-solusi` | pencarian: `page` diganti `after`; respons memuat `nextAfter`, tanpa `totalElements` dan `totalPages` |
+| `demo-perf-06`   | detail produk dan respons pembuatan order menjadi DTO; tanpa `hibernateLazyInitializer` dan tanpa data pelanggan |

@@ -34,12 +34,12 @@ public class ProductController {
     }
 
     @GetMapping("/{id:\\d+}")
-    public Product get(@PathVariable Long id) {
+    public ProductDetail get(@PathVariable Long id) {
         return service.get(id);
     }
 
     @PutMapping("/{id:\\d+}")
-    public Product update(@PathVariable Long id,
+    public ProductDetail update(@PathVariable Long id,
             @Valid @RequestBody UpdateProductRequest request) {
         return service.update(id, request);
     }

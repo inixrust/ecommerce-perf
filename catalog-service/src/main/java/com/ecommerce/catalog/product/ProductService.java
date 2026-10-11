@@ -1,7 +1,9 @@
 package com.ecommerce.catalog.product;
 
+import com.ecommerce.catalog.category.CategoryRepository;
 import com.ecommerce.catalog.common.NotFoundException;
 import com.ecommerce.catalog.common.PageResponse;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -18,11 +20,18 @@ public class ProductService {
             LoggerFactory.getLogger(ProductService.class);
 
     private final ProductRepository products;
+    private final CategoryRepository categories;
 
-    public ProductService(ProductRepository products) {
+    public ProductService(ProductRepository products,
+            CategoryRepository categories) {
         this.products = products;
+        this.categories = categories;
     }
 
+    // Tanpa OSIV, relasi LAZY hanya bisa dimuat di dalam transaksi.
+    // readOnly: Hibernate tidak menyimpan snapshot untuk dirty checking
+    // dan tidak melakukan flush di akhir transaksi.
+    @Transactional(readOnly = true)
     public PageResponse<ProductSummary> list(Long categoryId,
             ProductStatus status, int page, int size) {
         var filter = Specification.allOf(
@@ -36,16 +45,34 @@ public class ProductService {
         return PageResponse.of(result.map(ProductService::toSummary));
     }
 
-    public Product get(Long id) {
-        return products.findById(id)
-                .orElseThrow(() -> new NotFoundException("Product", id));
+    @Transactional(readOnly = true)
+    public ProductDetail get(Long id) {
+        return toDetail(load(id));
     }
 
     @Transactional
-    public Product update(Long id, UpdateProductRequest request) {
-        Product product = get(id);
+    public ProductDetail update(Long id, UpdateProductRequest request) {
+        Product product = load(id);
         product.update(request.name(), request.price(), request.status());
-        return product;
+        return toDetail(product);
+    }
+
+    private Product load(Long id) {
+        return products.findDetailById(id)
+                .orElseThrow(() -> new NotFoundException("Product", id));
+    }
+
+    private ProductDetail toDetail(Product p) {
+        List<String> path = categories.pathNames(p.getCategory().getId());
+        List<ProductDetail.Image> images = p.getImages().stream()
+                .map(i -> new ProductDetail.Image(i.getUrl(),
+                        i.getPosition()))
+                .toList();
+        return new ProductDetail(p.getId(), p.getSku(), p.getName(),
+                p.getDescription(), p.getPrice(), p.getStatus(),
+                new ProductDetail.CategoryRef(p.getCategory().getId(),
+                        p.getCategory().getName()),
+                path, images, p.getCreatedAt(), p.getUpdatedAt());
     }
 
     private static ProductSummary toSummary(Product p) {
