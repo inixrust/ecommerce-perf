@@ -1,0 +1,20 @@
+# Lab pembanding Java 25 (Hari 5, Pengayaan): jar yang SAMA, dikompilasi
+# untuk Java 21, dijalankan di JRE 25. Dipakai bersama compose.yaml:
+#
+#   docker compose -f infra/compose.yaml -f infra/compose.java25.yaml \
+#       --profile bench up -d --wait --force-recreate \
+#       catalog-service order-service
+#
+# Kembali ke Java 21: jalankan perintah yang sama tanpa berkas ini.
+#
+# Image JRE 25 tidak berisi curl, jadi healthcheck memakai /dev/tcp bash:
+# kirim GET ke endpoint health lalu cari status UP di respons.
+services:
+  catalog-service:
+    image: eclipse-temurin:25.0.4.1_1-jre
+    healthcheck:
+      test: ["CMD", "bash", "-c", 'exec 3<>/dev/tcp/127.0.0.1/8081 && printf "GET /actuator/health HTTP/1.0\r\n\r\n" >&3 && grep -q UP <&3']
+  order-service:
+    image: eclipse-temurin:25.0.4.1_1-jre
+    healthcheck:
+      test: ["CMD", "bash", "-c", 'exec 3<>/dev/tcp/127.0.0.1/8082 && printf "GET /actuator/health HTTP/1.0\r\n\r\n" >&3 && grep -q UP <&3']
