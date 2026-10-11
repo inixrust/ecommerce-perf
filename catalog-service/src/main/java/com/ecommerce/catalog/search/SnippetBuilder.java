@@ -33,16 +33,20 @@ public class SnippetBuilder {
         }
         int start = Math.max(0, match - WINDOW / 2);
         int end = Math.min(words.length, start + WINDOW);
-        // TODO (Latihan 1.1)
-        String snippet = "";
+        // satu buffer untuk seluruh snippet, bukan String baru per kata
+        var snippet = new StringBuilder();
         for (int i = start; i < end; i++) {
             String keyword = normalizer.normalize(words[i]);
             boolean hit = keyword != null && keywords.contains(keyword);
-            snippet = snippet + (hit ? "**" + words[i] + "**" : words[i]);
+            if (hit) {
+                snippet.append("**").append(words[i]).append("**");
+            } else {
+                snippet.append(words[i]);
+            }
             if (i < end - 1) {
-                snippet = snippet + " ";
+                snippet.append(' ');
             }
         }
-        return snippet;
+        return snippet.toString();
     }
 }

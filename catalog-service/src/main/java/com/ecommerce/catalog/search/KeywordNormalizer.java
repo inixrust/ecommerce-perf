@@ -4,6 +4,7 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,6 +15,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class KeywordNormalizer {
+
+    // Pattern dikompilasi sekali. String.replaceAll dan String.matches
+    // mengompilasi ulang regex di setiap panggilan.
+    private static final Pattern MARKS = Pattern.compile("\\p{M}");
+    private static final Pattern NON_ALNUM = Pattern.compile("[^a-z0-9]");
 
     public List<String> keywords(String text) {
         List<String> result = new ArrayList<>();
@@ -27,15 +33,12 @@ public class KeywordNormalizer {
     }
 
     /** Mengembalikan null bila kata tidak layak menjadi kata kunci. */
-    // TODO (Latihan 1.1)
     public String normalize(String word) {
         String lower = word.toLowerCase(Locale.ROOT);
         var decomposed = Normalizer.normalize(lower, Normalizer.Form.NFD);
-        String withoutMarks = decomposed.replaceAll("\\p{M}", "");
-        String cleaned = withoutMarks.replaceAll("[^a-z0-9]", "");
-        if (!cleaned.matches("[a-z0-9]{2,}")) {
-            return null;
-        }
-        return cleaned;
+        String withoutMarks = MARKS.matcher(decomposed).replaceAll("");
+        String cleaned = NON_ALNUM.matcher(withoutMarks).replaceAll("");
+        // cleaned hanya berisi [a-z0-9], jadi cukup cek panjangnya
+        return cleaned.length() >= 2 ? cleaned : null;
     }
 }
