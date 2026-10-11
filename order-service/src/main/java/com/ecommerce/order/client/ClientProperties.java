@@ -8,6 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties("clients")
 public record ClientProperties(Catalog catalog, Pricing pricing) {
 
+    // TODO (Latihan 3.4)
     public record Catalog(URI baseUrl) {
     }
 

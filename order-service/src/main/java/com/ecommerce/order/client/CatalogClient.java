@@ -15,6 +15,7 @@ public class CatalogClient {
         this.http = http;
     }
 
+    // TODO (Latihan 3.4)
     public ProductInfo product(Long productId) {
         return http.get()
                 .uri("/api/v1/products/{id}", productId)

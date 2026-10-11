@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClient;
 @Configuration(proxyBeanMethods = false)
 class RestClientConfig {
 
+    // TODO (Latihan 3.4)
     @Bean
     RestClient catalogRestClient(RestClient.Builder builder,
             ClientProperties properties) {
