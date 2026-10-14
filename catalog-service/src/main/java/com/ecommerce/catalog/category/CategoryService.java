@@ -1,10 +1,13 @@
 package com.ecommerce.catalog.category;
 
+import com.ecommerce.catalog.common.CacheConfig;
 import com.ecommerce.catalog.common.NotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +21,8 @@ public class CategoryService {
     }
 
     /** Menyusun pohon kategori dari satu query, lalu di memori. */
+    @Cacheable(cacheNames = CacheConfig.CATEGORY_TREE, key = "'all'",
+            cacheManager = CacheConfig.LOCAL, sync = true)
     @Transactional(readOnly = true)
     public List<CategoryNode> tree() {
         List<Category> all = categories.findAll();
@@ -38,6 +43,8 @@ public class CategoryService {
         return roots;
     }
 
+    @CacheEvict(cacheNames = CacheConfig.CATEGORY_TREE, allEntries = true,
+            cacheManager = CacheConfig.LOCAL)
     @Transactional
     public CategoryNode create(CreateCategoryRequest request) {
         Category parent = null;
