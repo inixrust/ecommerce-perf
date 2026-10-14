@@ -8,7 +8,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties("clients")
 public record ClientProperties(Catalog catalog, Pricing pricing) {
 
-    public record Catalog(URI baseUrl) {
+    /** maxConcurrentCalls: batas panggilan bersamaan (bulkhead). */
+    public record Catalog(URI baseUrl, Duration connectTimeout,
+            Duration readTimeout, int maxConcurrentCalls) {
     }
 
     /**

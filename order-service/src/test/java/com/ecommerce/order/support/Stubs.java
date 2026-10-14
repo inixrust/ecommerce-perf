@@ -44,14 +44,24 @@ public class Stubs {
         pricingObserver.onRequest(callback);
     }
 
+    /** Jumlah maksimum request catalog yang dilayani bersamaan. */
+    public int maxConcurrentCatalogRequests() {
+        return catalogObserver.maxInFlight();
+    }
+
     /** Jumlah maksimum request pricing yang dilayani bersamaan. */
     public int maxConcurrentPricingRequests() {
         return pricingObserver.maxInFlight();
     }
 
     public void product(long id, String status) {
+        product(id, status, 0);
+    }
+
+    public void product(long id, String status, int delayMillis) {
         catalog.stubFor(get("/api/v1/products/" + id)
                 .willReturn(aResponse()
+                        .withFixedDelay(delayMillis)
                         .withHeader("Content-Type", "application/json")
                         .withBody("""
                                 {"id": %d, "sku": "SKU-%d",
